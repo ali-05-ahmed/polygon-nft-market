@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "hardhat/console.sol";
-import "./Collection.sol";
 
-contract NFTMarket is ReentrancyGuard {
+
+contract Market is ReentrancyGuard {
   using Counters for Counters.Counter;
   Counters.Counter private _itemIds;
   Counters.Counter private _itemsSold;
@@ -30,17 +30,8 @@ contract NFTMarket is ReentrancyGuard {
 
   mapping(uint256 => MarketItem) private idToMarketItem;
 
-  mapping(address => Collection) _collection;
+  
 
-  function createCollection(uint maxSupply,
-         string memory baseURI,
-          address _owner,
-           string memory _name, 
-           string memory _symbol) public {
-        _collection[msg.sender] = new Collection(maxSupply, baseURI, _owner, _name, _symbol);
-
-    
-    }
 
   event MarketItemCreated (
     uint indexed itemId,

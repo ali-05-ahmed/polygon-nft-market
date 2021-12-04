@@ -1,42 +1,82 @@
-describe("NFTMarket", function() {
-  it("Should create and execute market sales", async function() {
-    const Market = await ethers.getContractFactory("NFTMarket")
-    const market = await Market.deploy()
+
+
+describe("NFTMarket", function () {
+  let Market
+  let market
+  let Factory
+  let factory
+  let NFT
+  let nft
+  let [_, person1, person2] = [1, 1, 1]
+
+  it("Should create and execute market sales", async function () {
+    [_, person1, person2] = await ethers.getSigners()
+    Market = await ethers.getContractFactory("Market")
+    market = await Market.deploy()
     await market.deployed()
-    const marketAddress = market.address
+    let marketAddress = market.address
 
-    const NFT = await ethers.getContractFactory("NFT")
-    const nft = await NFT.deploy(marketAddress)
+    Factory = await ethers.getContractFactory("Factory")
+    factory = await Factory.deploy(marketAddress)
+    await factory.deployed()
+
+    NFT = await ethers.getContractFactory("NFT")
+    nft = await NFT.deploy(marketAddress)
     await nft.deployed()
-    const nftContractAddress = nft.address
+    nftContractAddress = nft.address
 
-    let listingPrice = await market.getListingPrice()
-    listingPrice = listingPrice.toString()
-
-    const auctionPrice = ethers.utils.parseUnits('1', 'ether')
-
-    await nft.createToken("https://www.mytokenlocation.com")
-    await nft.createToken("https://www.mytokenlocation2.com")
-  
-    await market.createMarketItem(nftContractAddress, 1, auctionPrice, { value: listingPrice })
-    await market.createMarketItem(nftContractAddress, 2, auctionPrice, { value: listingPrice })
-    
-    const [_, buyerAddress] = await ethers.getSigners()
-
-    await market.connect(buyerAddress).createMarketSale(nftContractAddress, 1, { value: auctionPrice})
-
-    items = await market.fetchMarketItems()
-    items = await Promise.all(items.map(async i => {
-      const tokenUri = await nft.tokenURI(i.tokenId)
-      let item = {
-        price: i.price.toString(),
-        tokenId: i.tokenId.toString(),
-        seller: i.seller,
-        owner: i.owner,
-        tokenUri
-      }
-      return item
-    }))
-    console.log('items: ', items)
+    let ss = await factory.createCollection();
+    await ss.wait()
+    console.log("person 0 ", _.address)
+    console.log("collection", ss.data)
   })
+  it("generate collection", async function () {
+
+    let ss = await factory.connect(person1).createCollection();
+    await ss.wait()
+    console.log("person 1 ", person1.address)
+    console.log("collection", ss.data)
+  })
+  it("generate collection", async function () {
+
+    let ss = await factory.connect(person1).createCollection();
+    await ss.wait()
+    console.log("person 1 ", person1.address)
+    console.log("collection", ss.data)
+  })
+
+  it("check collection count", async function () {
+
+    let ss = await factory.collections(_.address);
+    console.log("collection", ss.toNumber())
+  })
+  it("check collection count", async function () {
+
+    let ss = await factory.collections(person1.address);
+    console.log("collection", ss.toNumber())
+  })
+  it("check collection address", async function () {
+    let col1 = await factory.ownerIdToCollection(person1.address, 0)
+    console.log("collection 1", col1)
+    col1 = await factory.ownerIdToCollection(person1.address, 1)
+    console.log("collection 2", col1)
+    col1 = await factory.ownerIdToCollection(person1.address, 2)
+    console.log("collection 3", col1)
+  })
+  it("generate collection", async function () {
+
+    let ss = await factory.connect(person1).createCollection();
+    await ss.wait()
+    console.log("person 1 ", person1.address)
+    console.log("collection", ss.data)
+  })
+  it("check collection address", async function () {
+    let col1 = await factory.ownerIdToCollection(person1.address, 0)
+    console.log("collection 1", col1)
+    col1 = await factory.ownerIdToCollection(person1.address, 1)
+    console.log("collection 2", col1)
+    col1 = await factory.ownerIdToCollection(person1.address, 2)
+    console.log("collection 3", col1)
+  })
+
 })
