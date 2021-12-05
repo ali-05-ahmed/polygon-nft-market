@@ -65,7 +65,7 @@ contract AuctionV0 {
 
     event auctionConcluded(address indexed seller, uint256 basePrice , uint256 indexed startingTime, uint256 endingTime, referenceToken indexed tokenDetails, address bidWinner, uint256 winningBid, uint256 assetsTransferTime);
 
-
+    
     
     // Array of auctions for a token
     mapping (address => mapping(uint256 => AuctionDetails)) public tokenIdToAuction;

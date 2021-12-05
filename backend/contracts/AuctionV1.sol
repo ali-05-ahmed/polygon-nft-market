@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-contract Auction is Context , Ownable{
+contract AuctionV1 is Context , Ownable{
 
     uint256 public up;
     bool public end;
@@ -59,7 +59,7 @@ contract Auction is Context , Ownable{
 
         // Events
 
-    function createAuction(uint256 _basePrice, uint256 _endingUnix, address _nftContract, uint256 _tokenId, address _msgSender) public returns(uint256){
+    function createAuction(uint256 _basePrice, uint256 _endingUnix, address _nftContract, uint256 _tokenId, address _msgSender) public onlyOwner returns(uint256){
 
         require(tokenIdToAuction[_nftContract][_tokenId].startingUnix <= 0,"The Auction has already started");
         
@@ -88,7 +88,6 @@ contract Auction is Context , Ownable{
     
      if(block.timestamp > tokenIdToAuction[_nftContract][_tokenId].endingUnix){
         auction.ended = true;
-        auction.seller =  payable (address(0));
       
         _returnBids(_nftContract,_tokenId);
 
@@ -96,6 +95,19 @@ contract Auction is Context , Ownable{
 
       tokenIdToAuction[_nftContract][_tokenId] = auction;
     }
+
+    function canSell(address _nftContract,uint256 _tokenId) public view onlyOwner returns(bool) {      //private
+
+     AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
+    
+     if(block.timestamp > auction.endingUnix){
+         return true;
+     }
+     else 
+     return false;
+    }
+
+
 
     function getLastTime(address _nftContract ,uint256 _tokenId) public view returns(uint){
         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
@@ -122,6 +134,12 @@ contract Auction is Context , Ownable{
 
         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
         return auction.highestBid;
+
+    }
+    function getHighestBidder(address _nftContract,uint256 _tokenId)public view returns(address){
+
+        AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
+        return auction.highestBidder;
 
     }
     
@@ -187,10 +205,10 @@ contract Auction is Context , Ownable{
        
       }
 
-    function concludeAuction(uint256 _tokenId, address _nftContract) payable public {
+    function concludeAuction(uint256 _tokenId, address _nftContract,address _msgSender) payable onlyOwner public {
 
     AuctionDetails memory auction = tokenIdToAuction[_nftContract][_tokenId];
-    require((msg.sender == tokenIdToAuction[_nftContract][_tokenId].seller) || (msg.sender == tokenIdToAuction[_nftContract][_tokenId].highestBidder), 'You are not authorized to conclude the auction'  );
+    require((_msgSender == tokenIdToAuction[_nftContract][_tokenId].seller) || (_msgSender == tokenIdToAuction[_nftContract][_tokenId].highestBidder), 'You are not authorized to conclude the auction'  );
     require(auction.endingUnix < block.timestamp,"Auction Time remaining");
 
     bool ended = _checkAuctionStatus(_tokenId,_nftContract);
@@ -202,7 +220,7 @@ contract Auction is Context , Ownable{
     delete tokenIdToAuction[_nftContract][_tokenId];
     delete auctionBids[_nftContract][_tokenId];
     
-    uint256 payment = auction.highestBid;
+    uint256 payment = auction.highestBid * 1 wei;
     
     
     // ERC721(auction.nftContract).transferFrom(address(this), auction.highestBidder , _tokenId);
