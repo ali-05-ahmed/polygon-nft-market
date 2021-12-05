@@ -11,9 +11,14 @@ contract NFT is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     address contractAddress;
+    string public baseURI;
 
-    constructor(address marketplaceAddress) ERC721("Metaverse", "METT") {
+    constructor(address marketplaceAddress,
+    string memory name,
+    string memory symbol,
+    string memory baseURI_) ERC721(name,symbol) {
         contractAddress = marketplaceAddress;
+        baseURI = baseURI_;
     }
 
     function createToken(string memory tokenURI) public returns (uint) {
@@ -25,5 +30,11 @@ contract NFT is ERC721URIStorage {
         setApprovalForAll(contractAddress, true);
         return newItemId;
     }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    
 
 }

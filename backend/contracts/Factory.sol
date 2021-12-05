@@ -14,18 +14,16 @@ contract Factory is Context {
     mapping(address => uint256) public collections;
 
     constructor(address _market){
-    market = _market;
+        market = _market;
     }
 
-
-function createCollection()public returns(address){
-    uint256 id = collections[_msgSender()];
-    NFT collection = new NFT(market);
-    address addr = address(collection);
-    ownerIdToCollection[_msgSender()][id]=addr;
-    collections[_msgSender()]++;
-    return addr;
-
-}
+    function createCollection(string calldata name,string calldata symbol,string calldata baseURI)public returns(address){
+        uint256 id = collections[_msgSender()];
+         NFT collection = new NFT(market,name,symbol,baseURI);
+        address addr = address(collection);
+        ownerIdToCollection[_msgSender()][id]=addr;
+        collections[_msgSender()]++;
+        return addr;
+    }
 
 }

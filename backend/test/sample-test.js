@@ -21,62 +21,71 @@ describe("NFTMarket", function () {
     await factory.deployed()
 
     NFT = await ethers.getContractFactory("NFT")
-    nft = await NFT.deploy(marketAddress)
+    nft = await NFT.deploy(marketAddress, "minter", "nft", "www.defaultnft.com")
     await nft.deployed()
     nftContractAddress = nft.address
 
-    let ss = await factory.createCollection();
-    await ss.wait()
-    console.log("person 0 ", _.address)
-    console.log("collection", ss.data)
   })
   it("generate collection", async function () {
 
-    let ss = await factory.connect(person1).createCollection();
+    let ss = await factory.connect(person1).createCollection("mynft", "nn", "www.google.com");
     await ss.wait()
     console.log("person 1 ", person1.address)
-    console.log("collection", ss.data)
+    console.log("collection", ss)
   })
-  it("generate collection", async function () {
+  it("get collection URI", async function () {
 
-    let ss = await factory.connect(person1).createCollection();
-    await ss.wait()
-    console.log("person 1 ", person1.address)
-    console.log("collection", ss.data)
-  })
-
-  it("check collection count", async function () {
-
-    let ss = await factory.collections(_.address);
-    console.log("collection", ss.toNumber())
-  })
-  it("check collection count", async function () {
-
-    let ss = await factory.collections(person1.address);
-    console.log("collection", ss.toNumber())
-  })
-  it("check collection address", async function () {
     let col1 = await factory.ownerIdToCollection(person1.address, 0)
     console.log("collection 1", col1)
-    col1 = await factory.ownerIdToCollection(person1.address, 1)
-    console.log("collection 2", col1)
-    col1 = await factory.ownerIdToCollection(person1.address, 2)
-    console.log("collection 3", col1)
-  })
-  it("generate collection", async function () {
+    let collection = await factory.getCollection(col1)
+    let URI = await collection.baseURI()
+    console.log("collection", collection)
 
-    let ss = await factory.connect(person1).createCollection();
-    await ss.wait()
-    console.log("person 1 ", person1.address)
-    console.log("collection", ss.data)
   })
-  it("check collection address", async function () {
-    let col1 = await factory.ownerIdToCollection(person1.address, 0)
-    console.log("collection 1", col1)
-    col1 = await factory.ownerIdToCollection(person1.address, 1)
-    console.log("collection 2", col1)
-    col1 = await factory.ownerIdToCollection(person1.address, 2)
-    console.log("collection 3", col1)
-  })
+
+
+
+
+  // it("generate collection", async function () {
+
+  //   let ss = await factory.connect(person1).createCollection();
+  //   await ss.wait()
+  //   console.log("person 1 ", person1.address)
+  //   console.log("collection", ss.data)
+  // })
+
+  // it("check collection count", async function () {
+
+  //   let ss = await factory.collections(_.address);
+  //   console.log("collection", ss.toNumber())
+  // })
+  // it("check collection count", async function () {
+
+  //   let ss = await factory.collections(person1.address);
+  //   console.log("collection", ss.toNumber())
+  // })
+  // it("check collection address", async function () {
+  //   let col1 = await factory.ownerIdToCollection(person1.address, 0)
+  //   console.log("collection 1", col1)
+  //   col1 = await factory.ownerIdToCollection(person1.address, 1)
+  //   console.log("collection 2", col1)
+  //   col1 = await factory.ownerIdToCollection(person1.address, 2)
+  //   console.log("collection 3", col1)
+  // })
+  // it("generate collection", async function () {
+
+  //   let ss = await factory.connect(person1).createCollection();
+  //   await ss.wait()
+  //   console.log("person 1 ", person1.address)
+  //   console.log("collection", ss.data)
+  // })
+  // it("check collection address", async function () {
+  //   let col1 = await factory.ownerIdToCollection(person1.address, 0)
+  //   console.log("collection 1", col1)
+  //   col1 = await factory.ownerIdToCollection(person1.address, 1)
+  //   console.log("collection 2", col1)
+  //   col1 = await factory.ownerIdToCollection(person1.address, 2)
+  //   console.log("collection 3", col1)
+  // })
 
 })
