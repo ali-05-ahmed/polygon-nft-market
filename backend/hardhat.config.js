@@ -39,4 +39,7 @@ module.exports = {
     cache: "./cache",
     artifacts: "../frontend/src/artifacts"
   },
+  mocha: {
+    timeout: 200000
+  }
 };

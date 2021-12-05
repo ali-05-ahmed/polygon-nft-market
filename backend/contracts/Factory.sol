@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./NFT.sol";
+import "./Collection.sol";
 
 import "hardhat/console.sol";
 
@@ -19,7 +19,7 @@ contract Factory is Context {
 
     function createCollection(string calldata name,string calldata symbol,string calldata baseURI)public returns(address){
         uint256 id = collections[_msgSender()];
-         NFT collection = new NFT(market,name,symbol,baseURI);
+         Collection collection = new Collection(market,name,symbol,baseURI,_msgSender());
         address addr = address(collection);
         ownerIdToCollection[_msgSender()][id]=addr;
         collections[_msgSender()]++;
