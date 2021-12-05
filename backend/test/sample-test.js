@@ -10,10 +10,10 @@ describe("NFTMarket", function () {
   let NFT
   let nft
   let Collection
-  let [_, person1, person2] = [1, 1, 1]
+  let [_, person1, person2, person3] = [1, 1, 1, 1]
 
   it("Should create and execute market sales", async function () {
-    [_, person1, person2] = await ethers.getSigners()
+    [_, person1, person2, person3] = await ethers.getSigners()
     Market = await ethers.getContractFactory("Market")
     market = await Market.deploy()
     await market.deployed()
@@ -39,16 +39,46 @@ describe("NFTMarket", function () {
 
     const _value = await ethers.utils.parseUnits('10', 'wei')
     const _value2 = await ethers.utils.parseUnits('15', 'wei')
-    let tx = await auction.createAuction(10, 10, nft.address, 1, _.address)
+    const _value3 = await ethers.utils.parseUnits('5', 'wei')
+
+    let tx = await auction.createAuction(1, 10, nft.address, 1, _.address)
     await tx.wait()
-    let bid = await auction.connect(person1).bid(nft.address, 1, { value: _value })
+    let bid = await auction.connect(person1).bid(nft.address, 1, { value: _value3 })
+    await bid.wait()
+    bid = await auction.connect(person3).bid(nft.address, 1, { value: _value })
     await bid.wait()
     bid = await auction.connect(person2).bid(nft.address, 1, { value: _value2 })
     await bid.wait()
     await new Promise(resolve => setTimeout(resolve, 11000));
-    bid = await auction.connect(person2).bid(nft.address, 1, { value: _value })
+    bid = await auction.connect(person2).bid(nft.address, 1, { value: _value3 })
     await bid.wait()
 
+
+    // bid = await auction.connect(person1).bid(nft.address, 1, { value: _value3 })
+    // await bid.wait()
+    let highestBid = await auction.getHighestBid(nft.address, 1)
+    console.log(highestBid.toNumber())
+
+    let pending = await auction.connect(person2).getPendingReturns()
+    console.log(pending.toNumber())
+
+    tx = await auction.createAuction(1, 10, nft.address, 2, _.address)
+    await tx.wait()
+    bid = await auction.connect(person1).bid(nft.address, 2, { value: _value3 })
+    await bid.wait()
+    bid = await auction.connect(person3).bid(nft.address, 2, { value: _value })
+    await bid.wait()
+    bid = await auction.connect(person2).bid(nft.address, 2, { value: _value2 })
+    await bid.wait()
+    await new Promise(resolve => setTimeout(resolve, 11000));
+    bid = await auction.connect(person2).bid(nft.address, 2, { value: _value3 })
+    await bid.wait()
+
+    highestBid = await auction.getHighestBid(nft.address, 1)
+    console.log(highestBid.toNumber())
+
+    pending = await auction.connect(person1).getPendingReturns()
+    console.log(pending.toNumber())
   })
 
 

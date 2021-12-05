@@ -9,6 +9,9 @@ import "@openzeppelin/contracts/utils/Context.sol";
 
 contract Auction is Context {
 
+    uint256 public up;
+    bool public end;
+
 // Represents an auction on an NFT
     struct AuctionDetails {
         // Current owner of NFT
@@ -53,8 +56,10 @@ contract Auction is Context {
     function createAuction(uint256 _basePrice, uint256 _endingUnix, address _nftContract, uint256 _tokenId, address _msgSender) public returns(uint256){
 
         require(tokenIdToAuction[_nftContract][_tokenId].startingUnix <= 0,"The Auction has already started");
+        
         //re-auction must be added
-     // AuctionDetails memory auction = tokenIdToAuction[_nftContract][_tokenId];
+        //AuctionDetails memory auction = tokenIdToAuction[_nftContract][_tokenId];
+        
         _endingUnix = _endingUnix * 1 seconds;
         _endingUnix = block.timestamp + _endingUnix;
         
@@ -63,18 +68,26 @@ contract Auction is Context {
         tokenIdToAuction[_nftContract][_tokenId] = AuctionDetails(payable(_msgSender),_basePrice,address(0),0,_endingUnix,block.timestamp,false);
         
         return tokenIdToAuction[_nftContract][_tokenId].startingUnix;
-     // emit AuctionCreated(_msgSender, _basePrice, block.timestamp, _endingUnix, referenceToken(_nftContract,_tokenId));
+        
+        //emit AuctionCreated(_msgSender, _basePrice, block.timestamp, _endingUnix, referenceToken(_nftContract,_tokenId));
   
     }
     
-    function _updateStatus(address _nftContract,uint256 _tokenId) public { // private
+    function _updateStatus(address _nftContract,uint256 _tokenId) public {      //private
+
+     up++;
+
      AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
      require(auction.ended == false,"This auction has Ended");
     
-     if(block.timestamp > auction.endingUnix){
-         auction.ended = true;
-    //     _returnBids(_nftContract,_tokenId);
+     if(block.timestamp > tokenIdToAuction[_nftContract][_tokenId].endingUnix){
+        auction.ended = true;
+        auction.seller =  payable (address(0));
+      
+        _returnBids(_nftContract,_tokenId);
+
      }
+
       tokenIdToAuction[_nftContract][_tokenId] = auction;
     }
 
@@ -82,8 +95,9 @@ contract Auction is Context {
         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
         return auction.endingUnix;
     }
+
     function getCurrentTime()public view returns(uint256){
-    return block.timestamp;
+        return block.timestamp;
     }
 
     function _returnBids(address _nftContract,uint256 _tokenId) private {
@@ -93,40 +107,50 @@ contract Auction is Context {
                 
         for(uint256 i=0;i<=_bid.length-1;i++){
             if(_bid[i].amount != auction.highestBid ){
-                pendingReturns[_bid[i].bidder] += payedBids[_bid[i].bidder][_nftContract][_tokenId];
+            pendingReturns[_bid[i].bidder] += payedBids[_bid[i].bidder][_nftContract][_tokenId];
             }
         }
     }
     
     function getHighestBid(address _nftContract,uint256 _tokenId)public view returns(uint256){
+
         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
         return auction.highestBid;
+
     }
     
     function getAuctionEnded(address _nftContract,uint256 _tokenId)public returns(bool){
+
         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
         _updateStatus(_nftContract,_tokenId);
         return auction.ended;
+
     }
+
     function getPendingReturns()public view returns(uint256){
         return pendingReturns[msg.sender];
     }
 
     function withdraw() public payable {  // msg.sender -> address in parameter
+
         require(pendingReturns[msg.sender] > 0 , "No Tokens pending");
+
         uint256 amount = pendingReturns[msg.sender];
         address payable receiver =payable(msg.sender);
+
         receiver.transfer(amount);
     } 
 
 
     function bid(address _nftContract ,uint256 _tokenId) public payable { // msg.sender -> address parameter
         
-        AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
-        require(auction.ended == false , "Auction has ended");
+         AuctionDetails memory auction= tokenIdToAuction[_nftContract][_tokenId];
+         require(auction.ended == false , "Auction has ended");
          
          require(auction.seller !=address(0),"Auction does not exist");
-         
+
+         end = auction.ended;
+
          _updateStatus(_nftContract,_tokenId);
          if(block.timestamp < auction.endingUnix){ 
 
@@ -141,14 +165,42 @@ contract Auction is Context {
          auction.highestBid = amount;
          auction.highestBidder = msg.sender;
          auctionBids[_nftContract][_tokenId].push(Bid(_msgSender(),amount,block.timestamp));
-
-         }
-         
-        
-
-         
          tokenIdToAuction[_nftContract][_tokenId] = auction;
-               
+
+         }               
     }
 
+    function _checkAuctionStatus(uint256 _tokenId, address _nftContract) public view returns(bool){
+            
+         AuctionDetails memory auction = tokenIdToAuction[_nftContract][_tokenId];
+
+       require(auction.seller != address(0), 'Auction for this NFT is not in progress');
+
+        return auction.ended;
+
+       
+      }
+
+    function concludeAuction(uint256 _tokenId, address _nftContract) payable public {
+
+    AuctionDetails memory auction = tokenIdToAuction[_nftContract][_tokenId];
+    require((msg.sender == tokenIdToAuction[_nftContract][_tokenId].seller) || (msg.sender == tokenIdToAuction[_nftContract][_tokenId].highestBidder), 'You are not authorized to conclude the auction'  );
+    require(auction.endingUnix < block.timestamp,"Auction Time remaining");
+
+    bool ended = _checkAuctionStatus(_tokenId,_nftContract);
+
+    if(!ended){
+        _updateStatus(_nftContract,_tokenId);
+    }
+    
+    delete tokenIdToAuction[_nftContract][_tokenId];
+    delete auctionBids[_nftContract][_tokenId];
+    
+    uint256 payment = auction.highestBid;
+    
+    
+    // ERC721(auction.nftContract).transferFrom(address(this), auction.highestBidder , _tokenId);
+     auction.seller.transfer(payment);
+
+    }
 }
