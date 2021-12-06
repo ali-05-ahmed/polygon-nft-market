@@ -9,7 +9,7 @@ import "hardhat/console.sol";
 
 contract NFT is ERC721URIStorage {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    Counters.Counter public _tokenIds;
     address contractAddress;
     string public baseURI;
 
@@ -21,17 +21,17 @@ contract NFT is ERC721URIStorage {
         baseURI = baseURI_;
     }
 
-    function createToken(string memory tokenURI) public virtual returns (uint) {
+    function createToken(string memory URI) public virtual returns (uint) {
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
 
         _mint(msg.sender, newItemId);
-        _setTokenURI(newItemId, tokenURI);
+        _setTokenURI(newItemId, URI);
         setApprovalForAll(contractAddress, true);
         return newItemId;
     }
 
-    function _baseURI() internal view override returns (string memory) {
+    function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
     }
 
